@@ -20,7 +20,6 @@ let noisedelay = 600;
 let delaycounter = 0;
 let noiseScale = 1200;
 let hue = [];
-let seafloor;
 let fish;
 
 function setup() {
@@ -46,8 +45,7 @@ function setup() {
     for (let j = 0; j < numPart; j++) {
         particles[j] = new FlowParticle;
     }
-    seafloor = loadImage('assets/seafloor.jpg');
-    fish = loadImage('assets/fish.svg');
+    fish = loadImage('./assets/fish.svg');
 }
 
 function windowResized() {
