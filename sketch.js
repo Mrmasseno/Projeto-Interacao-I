@@ -45,7 +45,7 @@ function setup() {
     for (let j = 0; j < numPart; j++) {
         particles[j] = new FlowParticle;
     }
-    fish = loadImage('./assets/Fish.svg');
+    fish = loadImage('./assets/fish.svg');
 }
 
 function windowResized() {
