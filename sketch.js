@@ -1,5 +1,5 @@
 const school = [];
-let numFish = 200;
+let numFish = 20;
 
 let video;
 let poseNet;
@@ -24,9 +24,9 @@ let fish;
 
 function setup() {
     createCanvas(windowWidth, windowHeight);
-  //  alignSlider = createSlider(0, 2, 1, 0.1);
+    //  alignSlider = createSlider(0, 2, 1, 0.1);
     //cohesionSlider = createSlider(0, 2, 1, 0.1);
-  //  separationSlider = createSlider(0, 2, 1, 0.1);
+    //  separationSlider = createSlider(0, 2, 1, 0.1);
     lastPost = createVector();
     for (let i = 0; i < numFish; i++) {
         school.push(new Fish());
@@ -55,17 +55,6 @@ function windowResized() {
 function draw() {
     //   background(seafloor,50);
     var mouse = createVector(width - mouseX, mouseY);
-    console.log(numposes.length);
-    if (numposes.length > prevnumposes) {
-        for (let i = prevnumposes; i < numposes.length; i++) {
-            hue[i] = random(100);
-        }
-    } else {
-        for (let i = numposes.length; i < prevnumposes; i++) {
-            hue[i] = null;
-        }
-    }
-    prevnumposes = numposes.length;
 
     push();
     translate(width, 0);
@@ -80,7 +69,6 @@ function draw() {
         var nose = createVector(map(pose.keypoints[0].position.x, 0, video.width, 0, width), map(pose.keypoints[0].position.y, 0, video.height, 0, height));
         for (let i = 0; i < particles.length; i++) {
             particles[i].flee(rightWrist);
-            //  particles[i].nearPerson(nose, hue);
             particles[i].show(hue);
         }
     } else {
@@ -100,9 +88,22 @@ function draw() {
         school[i].edges();
         if (pose && cam) {
             school[i].flock(school, rightWrist);
+            if (school[i].following) {
+                school[i].follow(nose);
+            }
         } else {
             school[i].flock(school, mouse);
         }
+    }
+    for (let i = 0; i < 6; i++) {
+        if (pose && cam) {
+            school[i].following = true;
+        } else {
+            school[i].unfollow();
+        }
+    }
+
+    for (let i = 0; i < school.length; i++) {
         school[i].update();
         school[i].show();
     }
@@ -111,7 +112,6 @@ function draw() {
     stroke(255);
     strokeWeight(2);
     if (pose && cam) {
-        // ellipse(leftWrist.x, leftWrist.y, 50);
         ellipse(getSmoothPosition(rightWrist).x, getSmoothPosition(rightWrist).y, 50);
     } else {
         ellipse(mouse.x, mouse.y, 50);
@@ -141,8 +141,8 @@ function getSmoothCoord(coord, frameArray) {
             frameArray.push(coord);
         }
     } else {
-        frameArray.shift(); 
-        frameArray.push(coord); 
+        frameArray.shift();
+        frameArray.push(coord);
     }
     let sum = 0;
     for (let i = 0; i < frameArray.length; i++) {
