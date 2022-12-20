@@ -1,5 +1,5 @@
 const school = [];
-let numFish = 20;
+let numFish = 40;
 
 let video;
 let poseNet;
@@ -21,6 +21,17 @@ let delaycounter = 0;
 let noiseScale = 1200;
 let hue = [];
 let fish;
+let followers = []; 
+let followersColors = []; //cor do follower
+let followersAssigned = []; //nariz do follower
+let colors = [10]
+let rightWrist;
+let leftWrist;
+let nose = [];
+
+let reachedLimit = 3;
+let reachedNum = 0;
+let reached = false;
 
 function setup() {
     createCanvas(windowWidth, windowHeight);
@@ -46,6 +57,9 @@ function setup() {
         particles[j] = new FlowParticle;
     }
     fish = loadImage('./assets/fish.svg');
+    for (let i = 0; i < 10; i++) {
+        colors[i] = random(100);
+    }
 }
 
 function windowResized() {
@@ -59,16 +73,18 @@ function draw() {
     push();
     translate(width, 0);
     scale(-1, 1);
-    // console.log(pose);
+    console.log(numposes.length+" poses");
     fieldbg.fill(0, 7);
     fieldbg.noStroke();
     fieldbg.rect(0, 0, width, height);
     if (pose && cam) {
-        var leftWrist = createVector(map(pose.keypoints[9].position.x, 0, video.width, 0, width), map(pose.keypoints[9].position.y, 0, video.height, 0, height));
-        var rightWrist = createVector(map(pose.keypoints[10].position.x, 0, video.width, 0, width), map(pose.keypoints[10].position.y, 0, video.height, 0, height));
-        var nose = createVector(map(pose.keypoints[0].position.x, 0, video.width, 0, width), map(pose.keypoints[0].position.y, 0, video.height, 0, height));
+        leftWrist = createVector(map(pose.keypoints[9].position.x, 0, video.width, 0, width), map(pose.keypoints[9].position.y, 0, video.height, 0, height));
+        rightWrist = createVector(map(pose.keypoints[10].position.x, 0, video.width, 0, width), map(pose.keypoints[10].position.y, 0, video.height, 0, height));
+        for (let i = 0; i < numposes.length; i++) {
+            nose[i] = createVector(map(numposes[i].pose.keypoints[0].position.x, 0, video.width, 0, width), map(numposes[i].pose.keypoints[0].position.y, 0, video.height, 0, height));
+        }
         for (let i = 0; i < particles.length; i++) {
-            particles[i].flee(rightWrist);
+           particles[i].flee(mouse);
             particles[i].show(hue);
         }
     } else {
@@ -87,19 +103,38 @@ function draw() {
     for (let i = 0; i < school.length; i++) {
         school[i].edges();
         if (pose && cam) {
-            school[i].flock(school, rightWrist);
-            if (school[i].following) {
-                school[i].follow(nose);
+            school[i].flock(school, mouse);
+            if (numposes.length > prevnumposes) {
+                for (let j = prevnumposes; j < numposes.length; j++) {
+                    if (getClosestObjectPositions(school, nose[j]).includes(i)) {
+                        followers.push(i);
+                        followersAssigned.push(j);
+                        followersColors.push(colors[j])
+                    }
+                }
+            }
+            if (numposes.length < prevnumposes) {
+              /*  for (let j = 0; j < 6 * (prevnumposes - numposes.length); j++) {
+                    followers.pop();
+                    followersAssigned.pop();
+                    followersColors.pop();
+                    console.log("woop there it is");
+                } */
+                followers.splice(-(prevnumposes-numposes.length)*6,(prevnumposes-numposes.length)*6);
+                followersAssigned.splice(-(prevnumposes-numposes.length)*6,(prevnumposes-numposes.length)*6);
+                followersColors.splice(-(prevnumposes-numposes.length)*6,(prevnumposes-numposes.length)*6);
+            }
+            if (numposes.length < 1) {
+                school[i].unfollow();
             }
         } else {
             school[i].flock(school, mouse);
+            school[i].unfollow();
         }
     }
-    for (let i = 0; i < 6; i++) {
+    for (let i = 0; i < followers.length; i++) {
         if (pose && cam) {
-            school[i].following = true;
-        } else {
-            school[i].unfollow();
+            school[followers[i]].startFollowing(nose[followersAssigned[i]], followersColors[i], followersAssigned[i]);
         }
     }
 
@@ -112,13 +147,14 @@ function draw() {
     stroke(255);
     strokeWeight(2);
     if (pose && cam) {
-        ellipse(getSmoothPosition(rightWrist).x, getSmoothPosition(rightWrist).y, 50);
+        ellipse(getSmoothPosition(mouse).x, getSmoothPosition(mouse).y, 50);
     } else {
         ellipse(mouse.x, mouse.y, 50);
     }
     pop();
     delaycounter++;
-    // console.log(frameRate());
+    prevnumposes = numposes.length;
+
 }
 
 
@@ -149,6 +185,17 @@ function getSmoothCoord(coord, frameArray) {
         sum += frameArray[i];
     }
     return sum / frameArray.length;
+}
+
+function getClosestObjectPositions(objects, location) {
+    const objectsWithPositions = objects.map((obj, i) => ({
+        position: i,
+        distance: dist(obj.position.x, obj.position.y, location.x, location.y)
+    }));
+
+    objectsWithPositions.sort((a, b) => a.distance - b.distance);
+
+    return objectsWithPositions.slice(0, 6).map(obj => obj.position);
 }
 
 function keyPressed() {

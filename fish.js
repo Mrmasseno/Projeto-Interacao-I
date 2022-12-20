@@ -6,7 +6,7 @@ class Fish {
         this.acceleration = createVector();
         this.maxForce = 0.3;
         this.maxSpeed = 1.5;
-        this.size = random(10, 30);
+        this.size = random(5, 20);
         this.angle = 0;
         this.easing = 0.05;
         this.following = false;
@@ -15,6 +15,7 @@ class Fish {
         this.tempTarget;
         this.followTemp = false;
         this.followTarget;
+        this.assigned;
     }
 
     edges() {
@@ -50,6 +51,11 @@ class Fish {
             let flee = this.flee(target);
             this.acceleration.add(flee);
         }
+        if (this.following) {
+            this.follow();
+            this.convert(fishes);
+        }
+
     }
 
     align(fishes) {
@@ -115,12 +121,22 @@ class Fish {
         return steer;
     }
 
-    follow(target) {
-       // this.following = true;
+    startFollowing(target, color, assigned) {
+        this.followTarget = target;
+        this.following = true;
+        this.hue = color;
+        this.assigned = assigned;
+    }
+
+    follow() {
         this.color = true;
         let steer = createVector();
-        if (this.followTemp) {
-            if(dist(this.position.x, this.position.y, this.tempTarget.x, this.tempTarget.y) > 100) {
+        if (reachedNum >= reachedLimit) {
+            reached = true;
+            reachedNum = 0;
+        }
+        if (this.followTemp && !reached) {
+            if (dist(this.position.x, this.position.y, this.tempTarget.x, this.tempTarget.y) > 100) {
                 steer.add(this.tempTarget);
                 noFill();
                 stroke(255);
@@ -129,9 +145,10 @@ class Fish {
             } else {
                 this.tempTarget = null;
                 this.followTemp = false;
+                reachedNum++;
             }
         } else {
-            steer.add(target);
+            steer.add(this.followTarget);
         }
         steer.sub(this.position);
         steer.setMag(this.maxSpeed);
@@ -140,29 +157,32 @@ class Fish {
         this.acceleration.add(steer);
 
         if (mouseIsPressed) {
-            this.tempTarget = createVector(width-mouseX, mouseY);
-            console.log(this.tempTarget);
+            // this.tempTarget = createVector(rightWrist.x, rightWrist.y);
+            this.tempTarget = createVector(width - mouseX, mouseY);
             this.followTemp = true;
+            reached = false;
+
         }
     }
 
     unfollow() {
         this.following = false;
         this.color = false;
+        this.followTarget = null;
     }
 
-    convert(target, fishes) {
-        let d = dist(target.x, target.y, this.position.x, this.position.y);
-        let win = true;
-        for (let i = 0; i < fishes.length; i++) {
-            if(dist(fishes.x, dishes.y, target.x, target.y)<d) {
-                win = false;
+    convert(fishes) {
+        let perception = 50;
+        if (this.followTemp) {
+            for (let i = 0; i < fishes.length; i++) {
+                if (dist(fishes[i].position.x, fishes[i].position.y, this.position.x, this.position.y) < 50 && fishes[i].following == false) {
+                    fishes[i].startFollowing(this.followTarget, this.hue);
+                    followers.push(i);
+                    followersAssigned.push(this.assigned);
+                    followersColors.push(this.hue);
+                }
             }
         }
-        if(win) {
-            this.following = true;
-        }
-        this.followTarget = target;
     }
 
 
@@ -180,7 +200,6 @@ class Fish {
         }
         return steer;
     }
-
 
     update() {
         this.position.add(this.velocity);
