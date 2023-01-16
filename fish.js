@@ -5,8 +5,8 @@ class Fish {
         this.velocity.setMag(random(0.5, 1.5));
         this.acceleration = createVector();
         this.maxForce = 0.3;
-        this.maxSpeed = 1.5;
-        this.size = random(5, 20);
+        this.maxSpeed = 3;
+        this.size = random(10, 25);
         this.angle = 0;
         this.easing = 0.05;
         this.following = false;
@@ -139,7 +139,7 @@ class Fish {
             if (dist(this.position.x, this.position.y, this.tempTarget.x, this.tempTarget.y) > 100) {
                 steer.add(this.tempTarget);
                 noFill();
-                stroke(255);
+                stroke(100);
                 strokeWeight(1);
                 ellipse(this.tempTarget.x, this.tempTarget.y, 70, 70);
             } else {
@@ -222,6 +222,12 @@ class Fish {
         if (this.color) {
             colorMode(HSL, 100);
             fill(this.hue, 50, 50);
+            if(this.following) {
+                if(dist(this.position.x, this.position.y, goldArea.x, goldArea.y)<=200) {
+                    stroke(15,50,50);
+                    strokeWeight(2);
+                }
+            }
         }
         ellipse(-this.size / 2, 0, this.size * 2, this.size);
         pop();

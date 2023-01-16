@@ -1,5 +1,5 @@
 const school = [];
-let numFish = 40;
+let numFish = 60;
 
 let video;
 let poseNet;
@@ -21,7 +21,7 @@ let delaycounter = 0;
 let noiseScale = 1200;
 let hue = [];
 let fish;
-let followers = []; 
+let followers = [];
 let followersColors = []; //cor do follower
 let followersAssigned = []; //nariz do follower
 let colors = [10]
@@ -32,6 +32,11 @@ let nose = [];
 let reachedLimit = 3;
 let reachedNum = 0;
 let reached = false;
+
+let goldArea;
+let goldDelay = 100;
+let goldCounter = 0;
+let goldOn = false;
 
 function setup() {
     createCanvas(windowWidth, windowHeight);
@@ -60,6 +65,7 @@ function setup() {
     for (let i = 0; i < 10; i++) {
         colors[i] = random(100);
     }
+    goldArea = createVector();
 }
 
 function windowResized() {
@@ -67,13 +73,14 @@ function windowResized() {
 }
 
 function draw() {
-    //   background(seafloor,50);
     var mouse = createVector(width - mouseX, mouseY);
+
+    randomGoldZone();
 
     push();
     translate(width, 0);
     scale(-1, 1);
-    console.log(numposes.length+" poses");
+    console.log(numposes.length + " poses");
     fieldbg.fill(0, 7);
     fieldbg.noStroke();
     fieldbg.rect(0, 0, width, height);
@@ -84,17 +91,25 @@ function draw() {
             nose[i] = createVector(map(numposes[i].pose.keypoints[0].position.x, 0, video.width, 0, width), map(numposes[i].pose.keypoints[0].position.y, 0, video.height, 0, height));
         }
         for (let i = 0; i < particles.length; i++) {
-           particles[i].flee(mouse);
+            particles[i].flee(mouse);
+            particles[i].setHue(hue);
+            if (goldOn) {
+                particles[i].gold(goldArea);
+            }
             particles[i].show(hue);
         }
     } else {
         for (let i = 0; i < particles.length; i++) {
             particles[i].flee(mouse);
-            particles[i].show(hue);
+            particles[i].setHue(hue);
+            if (goldOn) {
+                particles[i].gold(goldArea);
+            }
+            particles[i].show();
         }
     }
     image(fieldbg, 0, 0);
-    tint(255, 30);
+    tint(255, 20);
     if (cam) {
         image(video, 0, 0, width, height);
     }
@@ -114,15 +129,15 @@ function draw() {
                 }
             }
             if (numposes.length < prevnumposes) {
-              /*  for (let j = 0; j < 6 * (prevnumposes - numposes.length); j++) {
-                    followers.pop();
-                    followersAssigned.pop();
-                    followersColors.pop();
-                    console.log("woop there it is");
-                } */
-                followers.splice(-(prevnumposes-numposes.length)*6,(prevnumposes-numposes.length)*6);
-                followersAssigned.splice(-(prevnumposes-numposes.length)*6,(prevnumposes-numposes.length)*6);
-                followersColors.splice(-(prevnumposes-numposes.length)*6,(prevnumposes-numposes.length)*6);
+                /*  for (let j = 0; j < 6 * (prevnumposes - numposes.length); j++) {
+                      followers.pop();
+                      followersAssigned.pop();
+                      followersColors.pop();
+                      console.log("woop there it is");
+                  } */
+                followers.splice(-(prevnumposes - numposes.length) * 6, (prevnumposes - numposes.length) * 6);
+                followersAssigned.splice(-(prevnumposes - numposes.length) * 6, (prevnumposes - numposes.length) * 6);
+                followersColors.splice(-(prevnumposes - numposes.length) * 6, (prevnumposes - numposes.length) * 6);
             }
             if (numposes.length < 1) {
                 school[i].unfollow();
@@ -202,4 +217,14 @@ function keyPressed() {
     if (key == ' ') {
         cam = !cam;
     }
+}
+
+function randomGoldZone() {
+    if (goldCounter >= goldDelay) {
+        goldArea = createVector(random(100, windowWidth-100), random(100,windowHeight-100));
+        goldOn = true;
+        goldCounter = 0;
+        goldDelay = random(240, 600);
+    }
+    goldCounter++;
 }

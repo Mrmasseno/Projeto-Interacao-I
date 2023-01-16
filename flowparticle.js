@@ -61,13 +61,22 @@ class FlowParticle {
         //console.log(hue.length);
     }
 
-    show(hue) {
+    gold(pos) {
+        if(dist(this.position.x, this.position.y, pos.x, pos.y)<150) {
+            this.hue = 20;
+        } else if (dist(this.position.x, this.position.y, pos.x, pos.y)<200){
+            this.hue = map(dist(this.position.x, this.position.y, pos.x, pos.y), 150, 200, 20, this.consthue);
+        } else {
+            this.hue = this.consthue;
+        }
+    }
+
+    show() {
         this.move();
         this.edges();
         this.update();
-        this.setHue(hue);
         fieldbg.colorMode(HSL, 100);
-        fieldbg.fill(this.hue, 50, map(acos(this.acceleration.x), 0, TWO_PI, 0, 100), 20);
+        fieldbg.fill(this.hue, 50, map(acos(this.acceleration.x), 0, TWO_PI, 0, 100), 40);
         fieldbg.ellipse(this.position.x, this.position.y, 5);
         this.hue+= 0.01;
         if(this.hue>100) {
